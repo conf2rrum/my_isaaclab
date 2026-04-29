@@ -12,6 +12,7 @@ from isaaclab.actuators import ImplicitActuatorCfg
 from isaaclab.assets import ArticulationCfg, AssetBaseCfg
 from isaaclab.controllers.differential_ik_cfg import DifferentialIKControllerCfg
 from isaaclab.devices.device_base import DeviceBase, DevicesCfg
+from isaaclab.devices.keyboard import Se3KeyboardCfg
 from isaaclab.devices.openxr import OpenXRDeviceCfg, XrCfg
 from isaaclab.devices.openxr.retargeters.manipulator.gripper_retargeter import GripperRetargeterCfg
 from isaaclab.devices.openxr.xr_cfg import XrAnchorRotationMode
@@ -35,15 +36,16 @@ if TYPE_CHECKING:
 _ISAACLAB_ROOT = Path(__file__).resolve().parents[6]
 
 # Asset locations.
-SERVER_RACK_USD_PATH = str(_ISAACLAB_ROOT / "custom_assets/server_lack_primitives_v2/server_rack_v2_plane.usd")
-FFW_SG2_USD_PATH = str(_ISAACLAB_ROOT / "custom_assets/robots/ffw_sg2/FFW_SG2.usd")
+SERVER_RACK_USD_PATH = str(_ISAACLAB_ROOT / "custom_assets/network_rack_v4.usd")
+FFW_SG2_USD_PATH = str(_ISAACLAB_ROOT / "custom_assets/robots/FFW_SG2/FFW_SG2.usd")
 
 # Server rack articulation.
 RACK_DOOR_JOINT = "door_hinge"
 RACK_FULLY_OPEN_JOINT_POS = 0
 RACK_SUCCESS_OPEN_THRESHOLD = 1.20
 RACK_POS = (0.65, 0.0, 0.0)
-RACK_ROT_WXYZ = (1.0, 0.0, 0.0, 0.0)
+# RACK_ROT_WXYZ = (1.0, 0.0, 0.0, 0.0)
+RACK_ROT_WXYZ = (0.70710678, 0.0, 0.0, -0.70710678)
 
 # Robot defaults. Adjust these names once the FFW SG2 USD is in place.
 FIX_ROBOT_BASE = True
@@ -178,7 +180,7 @@ class OpenXRHandTrackingVisualizerCfg(RetargeterCfg):
 
 
 class CalibratedWristDeltaRetargeter(RetargeterBase):
-    """Converts OpenXR wrist motion to stable relative position commands."""
+    """Converts OpenXR wrist motion to stable relative pose commands with zero rotation."""
 
     def __init__(self, cfg: CalibratedWristDeltaRetargeterCfg):
         super().__init__(cfg)
@@ -193,26 +195,27 @@ class CalibratedWristDeltaRetargeter(RetargeterBase):
         hand_data = data.get(self.bound_hand, {})
         wrist = hand_data.get("wrist")
         if wrist is None:
-            return torch.zeros(3, dtype=torch.float32, device=self._sim_device)
+            return torch.zeros(6, dtype=torch.float32, device=self._sim_device)
 
         wrist_pos = torch.tensor(wrist[:3], dtype=torch.float32, device=self._sim_device)
         if self._previous_wrist_pos is None:
             self._previous_wrist_pos = wrist_pos.clone()
-            return torch.zeros(3, dtype=torch.float32, device=self._sim_device)
+            return torch.zeros(6, dtype=torch.float32, device=self._sim_device)
 
         delta = wrist_pos - self._previous_wrist_pos
         self._previous_wrist_pos = wrist_pos.clone()
 
         delta_norm = torch.linalg.norm(delta)
         if delta_norm < self._position_deadband or delta_norm > self._max_frame_delta:
-            return torch.zeros(3, dtype=torch.float32, device=self._sim_device)
+            return torch.zeros(6, dtype=torch.float32, device=self._sim_device)
 
         if self._convert_openxr_to_robot_frame:
             # Hand poses arrive in the Isaac world frame (Z-up), while the IK command is in the robot base frame.
             # The FFW SG2 starts at +90 deg yaw, so world delta -> robot delta is Rz(-90) * delta.
             delta = torch.stack((delta[1], -delta[0], delta[2]))
 
-        return delta * self._position_scale
+        zero_rot = torch.zeros(3, dtype=torch.float32, device=self._sim_device)
+        return torch.cat((delta * self._position_scale, zero_rot))
 
     def get_requirements(self) -> list[RetargeterBase.Requirement]:
         return [RetargeterBase.Requirement.HAND_TRACKING]
@@ -379,13 +382,13 @@ class OpenDoorFFWSG2SceneCfg(InteractiveSceneCfg):
 
 @configclass
 class ActionsCfg:
-    """Right-arm absolute pose IK plus binary SG2 gripper command."""
+    """Right-arm relative pose IK plus binary SG2 gripper command."""
 
     arm_action = DifferentialInverseKinematicsActionCfg(
         asset_name="robot",
         joint_names=ROBOT_ARM_JOINT_NAMES,
         body_name=ROBOT_EE_BODY_NAME,
-        controller=DifferentialIKControllerCfg(command_type="position", use_relative_mode=True, ik_method="dls"),
+        controller=DifferentialIKControllerCfg(command_type="pose", use_relative_mode=True, ik_method="dls"),
     )
 
     gripper_action = BinaryJointPositionActionCfg(
@@ -492,6 +495,11 @@ class OpenDoorFFWSG2EnvCfg(ManagerBasedRLEnvCfg):
 
         self.teleop_devices = DevicesCfg(
             devices={
+                "keyboard": Se3KeyboardCfg(
+                    pos_sensitivity=0.02,
+                    rot_sensitivity=0.05,
+                    sim_device=self.sim.device,
+                ),
                 "handtracking": OpenXRDeviceCfg(
                     retargeters=[
                         CalibratedWristDeltaRetargeterCfg(

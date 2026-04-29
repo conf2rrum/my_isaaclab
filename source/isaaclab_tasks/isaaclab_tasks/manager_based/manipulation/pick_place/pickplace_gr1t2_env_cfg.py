@@ -54,22 +54,11 @@ class ObjectTableSceneCfg(InteractiveSceneCfg):
 
     object = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/Object",
-        init_state=RigidObjectCfg.InitialStateCfg(pos=[0.0025, 0.4263, 1.1], rot=[1, 0, 0, 0]),
+        init_state=RigidObjectCfg.InitialStateCfg(pos=[-0.45, 0.45, 0.9996], rot=[1, 0, 0, 0]),
         spawn=UsdFileCfg(
-            usd_path="/home/lgc/projects/IsaacLab/custom_assets/black_cup_222.usd",
-            scale=(0.15, 0.15, 0.15),
+            usd_path=f"{ISAACLAB_NUCLEUS_DIR}/Mimic/pick_place_task/pick_place_assets/steering_wheel.usd",
+            scale=(0.75, 0.75, 0.75),
             rigid_props=sim_utils.RigidBodyPropertiesCfg(),
-
-            # 👇 이 두 줄을 추가하여 URDF 변환기가 만든 쓸데없는 관절 속성을 강제로 꺼버립니다!
-            articulation_props=sim_utils.ArticulationRootPropertiesCfg(
-                articulation_enabled=False,
-            ),
-          
-            
-            # 👇 2. 컵의 무게를 100g(0.1kg) 정도로 아주 가볍게 만듭니다
-            mass_props=sim_utils.MassPropertiesCfg(
-                mass=0.1, 
-            ),
         ),
     )
 
@@ -283,15 +272,6 @@ class TerminationsCfg:
 
     object_dropping = DoneTerm(
         func=mdp.root_height_below_minimum, params={"minimum_height": 0.5, "asset_cfg": SceneEntityCfg("object")}
-    )
-
-    # 컵이 쓰러지면 에피소드 종료 (실패)
-    object_fell_over = DoneTerm(
-        func=mdp.bad_orientation,  # 👈 찾아내신 공식 함수 사용!
-        params={
-            "asset_cfg": SceneEntityCfg("object"), 
-            "limit_angle": 1.4  # 45도를 라디안으로 표현 (45 * π / 180)
-        }
     )
 
     success = DoneTerm(func=mdp.task_done_pick_place, params={"task_link_name": "right_hand_roll_link"})

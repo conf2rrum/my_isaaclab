@@ -1,0 +1,1204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- server_rack_v4: door = door_perforated.obj + RGBA (transparent holes). Omit URDF <material> on mesh so OBJ/MTL drives color (see mjcf_to_urdf URDF_OMIT_* pattern). -->
+<!-- URDF from server_rack_v2.xml — HTML comments in MJCF are not parsed, so only uncommented elements appear. -->
+<!-- Same-dir mesh: MTL+map_Kd; mesh visual also includes fallback color. -->
+<!-- For Isaac Sim USD, prefer: python -m mujoco_usd_converter (MJCF path) (output directory). -->
+<!-- Re-embed URDF colors+textures on mesh: pass flag force-urdf-mesh-materials on the CLI. -->
+
+<robot name="network_rack">
+  <link name="world"/>
+
+  <!-- MJCF /asset: named materials (matches Material nodes when texture is 2D file) -->
+  <material name="cable_yellow">
+    <color rgba="1.0 0.9 0.0 1.0"/>
+  </material>
+  <material name="led_green">
+    <color rgba="0.15 1.0 0.25 1.0"/>
+  </material>
+  <material name="led_red">
+    <color rgba="0.95 0.12 0.12 1.0"/>
+  </material>
+  <material name="rack_metal">
+    <color rgba="0.1 0.1 0.1 1.0"/>
+  </material>
+  <material name="switch_face">
+    <color rgba="0.8 0.8 0.8 1.0"/>
+  </material>
+
+  <link name="scene_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.01" iyy="0.01" izz="0.01" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+
+  <link name="cabinet_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.01" iyy="0.01" izz="0.01" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+    <visual name="cabinet_v0">
+      <origin xyz="0 0.3 0.9" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.8 0.04 1.8"/>
+      </geometry>
+      <material name="rack_metal"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0.3 0.9" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.8 0.04 1.8"/>
+      </geometry>
+    </collision>
+    <visual name="cabinet_v1">
+      <origin xyz="0 -0.3 0.9" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.8 0.04 1.8"/>
+      </geometry>
+      <material name="rack_metal"/>
+    </visual>
+    <collision>
+      <origin xyz="0 -0.3 0.9" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.8 0.04 1.8"/>
+      </geometry>
+    </collision>
+    <visual name="cabinet_v2">
+      <origin xyz="0 0 1.8" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.8 0.6 0.04"/>
+      </geometry>
+      <material name="rack_metal"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 1.8" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.8 0.6 0.04"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="glass_door_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.01" iyy="0.01" izz="0.01" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+    <!-- Perforated sheet: appearance from door_perforated.mtl + RGBA PNG only (no URDF material — avoids solid override / white). -->
+    <visual name="door_perforated">
+      <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="door_perforated.obj" scale="1 1 1"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 -0.3 0" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.02 0.6 1.8"/>
+      </geometry>
+    </collision>
+    <!-- D-pull (ㄷ형, 세로 그립): 두께·Y폭 슬림 -->
+    <visual name="glass_door_handle_vert">
+      <origin xyz="0.054 -0.55 0" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.016 0.036 0.2"/>
+      </geometry>
+      <material name="mat_glass_door_link_1">
+        <color rgba="0.7 0.7 0.7 1.0"/>
+      </material>
+    </visual>
+    <visual name="glass_door_handle_bridge_top">
+      <origin xyz="0.032 -0.55 0.095" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.042 0.036 0.01"/>
+      </geometry>
+      <material name="mat_glass_door_link_1">
+        <color rgba="0.7 0.7 0.7 1.0"/>
+      </material>
+    </visual>
+    <visual name="glass_door_handle_bridge_bot">
+      <origin xyz="0.032 -0.55 -0.095" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.042 0.036 0.01"/>
+      </geometry>
+      <material name="mat_glass_door_link_1">
+        <color rgba="0.7 0.7 0.7 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.054 -0.55 0" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.016 0.036 0.2"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0.032 -0.55 0.095" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.042 0.036 0.01"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0.032 -0.55 -0.095" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.042 0.036 0.01"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="srv_00_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.01" iyy="0.01" izz="0.01" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+    <visual name="srv_00_v0">
+      <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.04"/>
+      </geometry>
+      <material name="switch_face"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.04"/>
+      </geometry>
+    </collision>
+    <visual name="srv_00_v1">
+      <!-- Appearance: device_barcode.mtl (map_Kd) with device_barcode.obj. -->
+      <origin xyz="0.252 -0.18 0" rpy="0 3.14159 0"/>
+      <geometry>
+        <mesh filename="device_barcode.obj" scale="1 1 1"/>
+      </geometry>
+    </visual>
+    <visual name="srv_00_v2">
+      <origin xyz="-0.257 -0.18 -0.015" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <sphere radius="0.002"/>
+      </geometry>
+      <material name="led_green"/>
+    </visual>
+    <visual name="srv_00_v3">
+      <origin xyz="-0.257 -0.135 -0.015" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <sphere radius="0.002"/>
+      </geometry>
+      <material name="led_green"/>
+    </visual>
+    <visual name="srv_00_v4">
+      <origin xyz="-0.257 -0.09 -0.015" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <sphere radius="0.002"/>
+      </geometry>
+      <material name="led_green"/>
+    </visual>
+    <visual name="srv_00_v5">
+      <origin xyz="-0.257 -0.045 -0.015" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <sphere radius="0.002"/>
+      </geometry>
+      <material name="led_green"/>
+    </visual>
+    <visual name="srv_00_v6">
+      <origin xyz="-0.257 0 -0.015" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <sphere radius="0.002"/>
+      </geometry>
+      <material name="led_green"/>
+    </visual>
+    <visual name="srv_00_v7">
+      <origin xyz="-0.257 0.045 -0.015" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <sphere radius="0.002"/>
+      </geometry>
+      <material name="led_green"/>
+    </visual>
+    <visual name="srv_00_v8">
+      <origin xyz="-0.257 0.09 -0.015" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <sphere radius="0.002"/>
+      </geometry>
+      <material name="led_green"/>
+    </visual>
+    <visual name="srv_00_v9">
+      <origin xyz="-0.257 0.135 -0.015" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <sphere radius="0.002"/>
+      </geometry>
+      <material name="led_green"/>
+    </visual>
+    <visual name="srv_00_v10">
+      <origin xyz="-0.257 0.18 -0.015" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <sphere radius="0.002"/>
+      </geometry>
+      <material name="led_green"/>
+    </visual>
+    <visual name="srv_00_v11">
+      <origin xyz="-0.257 -0.18 0.015" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <sphere radius="0.002"/>
+      </geometry>
+      <material name="led_red"/>
+    </visual>
+    <visual name="srv_00_v12">
+      <origin xyz="-0.257 -0.135 0.015" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <sphere radius="0.002"/>
+      </geometry>
+      <material name="led_green"/>
+    </visual>
+    <visual name="srv_00_v13">
+      <origin xyz="-0.257 -0.09 0.015" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <sphere radius="0.002"/>
+      </geometry>
+      <material name="led_green"/>
+    </visual>
+    <visual name="srv_00_v14">
+      <origin xyz="-0.257 -0.045 0.015" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <sphere radius="0.002"/>
+      </geometry>
+      <material name="led_green"/>
+    </visual>
+    <visual name="srv_00_v15">
+      <origin xyz="-0.257 0 0.015" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <sphere radius="0.002"/>
+      </geometry>
+      <material name="led_green"/>
+    </visual>
+    <visual name="srv_00_v16">
+      <origin xyz="-0.257 0.045 0.015" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <sphere radius="0.002"/>
+      </geometry>
+      <material name="led_green"/>
+    </visual>
+    <visual name="srv_00_v17">
+      <origin xyz="-0.257 0.09 0.015" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <sphere radius="0.002"/>
+      </geometry>
+      <material name="led_green"/>
+    </visual>
+    <visual name="srv_00_v18">
+      <origin xyz="-0.257 0.135 0.015" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <sphere radius="0.002"/>
+      </geometry>
+      <material name="led_green"/>
+    </visual>
+    <visual name="srv_00_v19">
+      <origin xyz="-0.257 0.18 0.015" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <sphere radius="0.002"/>
+      </geometry>
+      <material name="led_green"/>
+    </visual>
+    <visual name="srv_00_v20">
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+      <material name="rack_metal"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="empty_00_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.01" iyy="0.01" izz="0.01" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+    <visual name="empty_00_v0">
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+      <material name="rack_metal"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="empty_01_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.01" iyy="0.01" izz="0.01" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+    <visual name="empty_01_v0">
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+      <material name="rack_metal"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="empty_02_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.01" iyy="0.01" izz="0.01" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+    <visual name="empty_02_v0">
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+      <material name="rack_metal"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="empty_03_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.01" iyy="0.01" izz="0.01" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+    <visual name="empty_03_v0">
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+      <material name="rack_metal"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="empty_04_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.01" iyy="0.01" izz="0.01" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+    <visual name="empty_04_v0">
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+      <material name="rack_metal"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="empty_05_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.01" iyy="0.01" izz="0.01" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+    <visual name="empty_05_v0">
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+      <material name="rack_metal"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="empty_06_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.01" iyy="0.01" izz="0.01" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+    <visual name="empty_06_v0">
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+      <material name="rack_metal"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="empty_07_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.01" iyy="0.01" izz="0.01" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+    <visual name="empty_07_v0">
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+      <material name="rack_metal"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="empty_08_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.01" iyy="0.01" izz="0.01" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+    <visual name="empty_08_v0">
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+      <material name="rack_metal"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="empty_09_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.01" iyy="0.01" izz="0.01" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+    <visual name="empty_09_v0">
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+      <material name="rack_metal"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="empty_10_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.01" iyy="0.01" izz="0.01" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+    <visual name="empty_10_v0">
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+      <material name="rack_metal"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="empty_11_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.01" iyy="0.01" izz="0.01" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+    <visual name="empty_11_v0">
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+      <material name="rack_metal"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="empty_12_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.01" iyy="0.01" izz="0.01" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+    <visual name="empty_12_v0">
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+      <material name="rack_metal"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="empty_13_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.01" iyy="0.01" izz="0.01" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+    <visual name="empty_13_v0">
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+      <material name="rack_metal"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="empty_14_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.01" iyy="0.01" izz="0.01" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+    <visual name="empty_14_v0">
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+      <material name="rack_metal"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="empty_15_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.01" iyy="0.01" izz="0.01" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+    <visual name="empty_15_v0">
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+      <material name="rack_metal"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="empty_16_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.01" iyy="0.01" izz="0.01" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+    <visual name="empty_16_v0">
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+      <material name="rack_metal"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="empty_17_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.01" iyy="0.01" izz="0.01" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+    <visual name="empty_17_v0">
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+      <material name="rack_metal"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="empty_18_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.01" iyy="0.01" izz="0.01" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+    <visual name="empty_18_v0">
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+      <material name="rack_metal"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="empty_19_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.01" iyy="0.01" izz="0.01" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+    <visual name="empty_19_v0">
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+      <material name="rack_metal"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="empty_20_link">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.01" iyy="0.01" izz="0.01" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+    <visual name="empty_20_v0">
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+      <material name="rack_metal"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.022" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.5 0.48 0.008"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="fixed_scene" type="fixed">
+    <parent link="world"/>
+    <child link="scene_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <joint name="fixed_cabinet" type="fixed">
+    <parent link="scene_link"/>
+    <child link="cabinet_link"/>
+    <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
+  </joint>
+
+  <joint name="door_hinge" type="revolute">
+    <parent link="cabinet_link"/>
+    <child link="glass_door_link"/>
+    <origin xyz="0.4 0.3 0.9" rpy="0.0 0.0 0.0"/>
+    <axis xyz="0 0 1"/>
+    <dynamics damping="8.0" friction="0.45"/>
+    <limit lower="0" upper="2.61799" effort="20" velocity="5"/>
+  </joint>
+
+  <joint name="srv_00_shelf_slide" type="prismatic">
+    <parent link="cabinet_link"/>
+    <child link="srv_00_link"/>
+    <origin xyz="0.1 0 1.175" rpy="0.0 0.0 0.0"/>
+    <axis xyz="1 0 0"/>
+    <dynamics damping="26.0" friction="3.0"/>
+    <limit lower="0" upper="0.32" effort="20" velocity="5"/>
+  </joint>
+
+  <joint name="empty_00_slide" type="prismatic">
+    <parent link="cabinet_link"/>
+    <child link="empty_00_link"/>
+    <origin xyz="0.1 0 0.125" rpy="0.0 0.0 0.0"/>
+    <axis xyz="1 0 0"/>
+    <dynamics damping="26.0" friction="3.0"/>
+    <limit lower="0" upper="0.32" effort="20" velocity="5"/>
+  </joint>
+
+  <joint name="empty_01_slide" type="prismatic">
+    <parent link="cabinet_link"/>
+    <child link="empty_01_link"/>
+    <origin xyz="0.1 0 0.175" rpy="0.0 0.0 0.0"/>
+    <axis xyz="1 0 0"/>
+    <dynamics damping="26.0" friction="3.0"/>
+    <limit lower="0" upper="0.32" effort="20" velocity="5"/>
+  </joint>
+
+  <joint name="empty_02_slide" type="prismatic">
+    <parent link="cabinet_link"/>
+    <child link="empty_02_link"/>
+    <origin xyz="0.1 0 0.225" rpy="0.0 0.0 0.0"/>
+    <axis xyz="1 0 0"/>
+    <dynamics damping="26.0" friction="3.0"/>
+    <limit lower="0" upper="0.32" effort="20" velocity="5"/>
+  </joint>
+
+  <joint name="empty_03_slide" type="prismatic">
+    <parent link="cabinet_link"/>
+    <child link="empty_03_link"/>
+    <origin xyz="0.1 0 0.275" rpy="0.0 0.0 0.0"/>
+    <axis xyz="1 0 0"/>
+    <dynamics damping="26.0" friction="3.0"/>
+    <limit lower="0" upper="0.32" effort="20" velocity="5"/>
+  </joint>
+
+  <joint name="empty_04_slide" type="prismatic">
+    <parent link="cabinet_link"/>
+    <child link="empty_04_link"/>
+    <origin xyz="0.1 0 0.325" rpy="0.0 0.0 0.0"/>
+    <axis xyz="1 0 0"/>
+    <dynamics damping="26.0" friction="3.0"/>
+    <limit lower="0" upper="0.32" effort="20" velocity="5"/>
+  </joint>
+
+  <joint name="empty_05_slide" type="prismatic">
+    <parent link="cabinet_link"/>
+    <child link="empty_05_link"/>
+    <origin xyz="0.1 0 0.375" rpy="0.0 0.0 0.0"/>
+    <axis xyz="1 0 0"/>
+    <dynamics damping="26.0" friction="3.0"/>
+    <limit lower="0" upper="0.32" effort="20" velocity="5"/>
+  </joint>
+
+  <joint name="empty_06_slide" type="prismatic">
+    <parent link="cabinet_link"/>
+    <child link="empty_06_link"/>
+    <origin xyz="0.1 0 0.425" rpy="0.0 0.0 0.0"/>
+    <axis xyz="1 0 0"/>
+    <dynamics damping="26.0" friction="3.0"/>
+    <limit lower="0" upper="0.32" effort="20" velocity="5"/>
+  </joint>
+
+  <joint name="empty_07_slide" type="prismatic">
+    <parent link="cabinet_link"/>
+    <child link="empty_07_link"/>
+    <origin xyz="0.1 0 0.475" rpy="0.0 0.0 0.0"/>
+    <axis xyz="1 0 0"/>
+    <dynamics damping="26.0" friction="3.0"/>
+    <limit lower="0" upper="0.32" effort="20" velocity="5"/>
+  </joint>
+
+  <joint name="empty_08_slide" type="prismatic">
+    <parent link="cabinet_link"/>
+    <child link="empty_08_link"/>
+    <origin xyz="0.1 0 0.525" rpy="0.0 0.0 0.0"/>
+    <axis xyz="1 0 0"/>
+    <dynamics damping="26.0" friction="3.0"/>
+    <limit lower="0" upper="0.32" effort="20" velocity="5"/>
+  </joint>
+
+  <joint name="empty_09_slide" type="prismatic">
+    <parent link="cabinet_link"/>
+    <child link="empty_09_link"/>
+    <origin xyz="0.1 0 0.575" rpy="0.0 0.0 0.0"/>
+    <axis xyz="1 0 0"/>
+    <dynamics damping="26.0" friction="3.0"/>
+    <limit lower="0" upper="0.32" effort="20" velocity="5"/>
+  </joint>
+
+  <joint name="empty_10_slide" type="prismatic">
+    <parent link="cabinet_link"/>
+    <child link="empty_10_link"/>
+    <origin xyz="0.1 0 0.625" rpy="0.0 0.0 0.0"/>
+    <axis xyz="1 0 0"/>
+    <dynamics damping="26.0" friction="3.0"/>
+    <limit lower="0" upper="0.32" effort="20" velocity="5"/>
+  </joint>
+
+  <joint name="empty_11_slide" type="prismatic">
+    <parent link="cabinet_link"/>
+    <child link="empty_11_link"/>
+    <origin xyz="0.1 0 0.675" rpy="0.0 0.0 0.0"/>
+    <axis xyz="1 0 0"/>
+    <dynamics damping="26.0" friction="3.0"/>
+    <limit lower="0" upper="0.32" effort="20" velocity="5"/>
+  </joint>
+
+  <joint name="empty_12_slide" type="prismatic">
+    <parent link="cabinet_link"/>
+    <child link="empty_12_link"/>
+    <origin xyz="0.1 0 0.725" rpy="0.0 0.0 0.0"/>
+    <axis xyz="1 0 0"/>
+    <dynamics damping="26.0" friction="3.0"/>
+    <limit lower="0" upper="0.32" effort="20" velocity="5"/>
+  </joint>
+
+  <joint name="empty_13_slide" type="prismatic">
+    <parent link="cabinet_link"/>
+    <child link="empty_13_link"/>
+    <origin xyz="0.1 0 0.775" rpy="0.0 0.0 0.0"/>
+    <axis xyz="1 0 0"/>
+    <dynamics damping="26.0" friction="3.0"/>
+    <limit lower="0" upper="0.32" effort="20" velocity="5"/>
+  </joint>
+
+  <joint name="empty_14_slide" type="prismatic">
+    <parent link="cabinet_link"/>
+    <child link="empty_14_link"/>
+    <origin xyz="0.1 0 0.825" rpy="0.0 0.0 0.0"/>
+    <axis xyz="1 0 0"/>
+    <dynamics damping="26.0" friction="3.0"/>
+    <limit lower="0" upper="0.32" effort="20" velocity="5"/>
+  </joint>
+
+  <joint name="empty_15_slide" type="prismatic">
+    <parent link="cabinet_link"/>
+    <child link="empty_15_link"/>
+    <origin xyz="0.1 0 0.875" rpy="0.0 0.0 0.0"/>
+    <axis xyz="1 0 0"/>
+    <dynamics damping="26.0" friction="3.0"/>
+    <limit lower="0" upper="0.32" effort="20" velocity="5"/>
+  </joint>
+
+  <joint name="empty_16_slide" type="prismatic">
+    <parent link="cabinet_link"/>
+    <child link="empty_16_link"/>
+    <origin xyz="0.1 0 0.925" rpy="0.0 0.0 0.0"/>
+    <axis xyz="1 0 0"/>
+    <dynamics damping="26.0" friction="3.0"/>
+    <limit lower="0" upper="0.32" effort="20" velocity="5"/>
+  </joint>
+
+  <joint name="empty_17_slide" type="prismatic">
+    <parent link="cabinet_link"/>
+    <child link="empty_17_link"/>
+    <origin xyz="0.1 0 0.975" rpy="0.0 0.0 0.0"/>
+    <axis xyz="1 0 0"/>
+    <dynamics damping="26.0" friction="3.0"/>
+    <limit lower="0" upper="0.32" effort="20" velocity="5"/>
+  </joint>
+
+  <joint name="empty_18_slide" type="prismatic">
+    <parent link="cabinet_link"/>
+    <child link="empty_18_link"/>
+    <origin xyz="0.1 0 1.025" rpy="0.0 0.0 0.0"/>
+    <axis xyz="1 0 0"/>
+    <dynamics damping="26.0" friction="3.0"/>
+    <limit lower="0" upper="0.32" effort="20" velocity="5"/>
+  </joint>
+
+  <joint name="empty_19_slide" type="prismatic">
+    <parent link="cabinet_link"/>
+    <child link="empty_19_link"/>
+    <origin xyz="0.1 0 1.075" rpy="0.0 0.0 0.0"/>
+    <axis xyz="1 0 0"/>
+    <dynamics damping="26.0" friction="3.0"/>
+    <limit lower="0" upper="0.32" effort="20" velocity="5"/>
+  </joint>
+
+  <joint name="empty_20_slide" type="prismatic">
+    <parent link="cabinet_link"/>
+    <child link="empty_20_link"/>
+    <origin xyz="0.1 0 1.125" rpy="0.0 0.0 0.0"/>
+    <axis xyz="1 0 0"/>
+    <dynamics damping="26.0" friction="3.0"/>
+    <limit lower="0" upper="0.32" effort="20" velocity="5"/>
+  </joint>
+
+  <!-- Gazebo: PBR (image maps), ambient/diffuse (reflectance/spec), and transparency (rgba4). -->
+
+  <gazebo reference="cabinet_link">
+    <visual name="cabinet_v0">
+      <material>
+        <ambient>0.06000000000000001 0.06000000000000001 0.06000000000000001 1.0</ambient>
+        <diffuse>0.042 0.042 0.042 1.0</diffuse>
+        <specular>0.015 0.015 0.015 1.0</specular>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="cabinet_link">
+    <visual name="cabinet_v1">
+      <material>
+        <ambient>0.06000000000000001 0.06000000000000001 0.06000000000000001 1.0</ambient>
+        <diffuse>0.042 0.042 0.042 1.0</diffuse>
+        <specular>0.015 0.015 0.015 1.0</specular>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="cabinet_link">
+    <visual name="cabinet_v2">
+      <material>
+        <ambient>0.06000000000000001 0.06000000000000001 0.06000000000000001 1.0</ambient>
+        <diffuse>0.042 0.042 0.042 1.0</diffuse>
+        <specular>0.015 0.015 0.015 1.0</specular>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="srv_00_link">
+    <visual name="srv_00_v20">
+      <material>
+        <ambient>0.06000000000000001 0.06000000000000001 0.06000000000000001 1.0</ambient>
+        <diffuse>0.042 0.042 0.042 1.0</diffuse>
+        <specular>0.015 0.015 0.015 1.0</specular>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="empty_00_link">
+    <visual name="empty_00_v0">
+      <material>
+        <ambient>0.06000000000000001 0.06000000000000001 0.06000000000000001 1.0</ambient>
+        <diffuse>0.042 0.042 0.042 1.0</diffuse>
+        <specular>0.015 0.015 0.015 1.0</specular>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="empty_01_link">
+    <visual name="empty_01_v0">
+      <material>
+        <ambient>0.06000000000000001 0.06000000000000001 0.06000000000000001 1.0</ambient>
+        <diffuse>0.042 0.042 0.042 1.0</diffuse>
+        <specular>0.015 0.015 0.015 1.0</specular>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="empty_02_link">
+    <visual name="empty_02_v0">
+      <material>
+        <ambient>0.06000000000000001 0.06000000000000001 0.06000000000000001 1.0</ambient>
+        <diffuse>0.042 0.042 0.042 1.0</diffuse>
+        <specular>0.015 0.015 0.015 1.0</specular>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="empty_03_link">
+    <visual name="empty_03_v0">
+      <material>
+        <ambient>0.06000000000000001 0.06000000000000001 0.06000000000000001 1.0</ambient>
+        <diffuse>0.042 0.042 0.042 1.0</diffuse>
+        <specular>0.015 0.015 0.015 1.0</specular>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="empty_04_link">
+    <visual name="empty_04_v0">
+      <material>
+        <ambient>0.06000000000000001 0.06000000000000001 0.06000000000000001 1.0</ambient>
+        <diffuse>0.042 0.042 0.042 1.0</diffuse>
+        <specular>0.015 0.015 0.015 1.0</specular>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="empty_05_link">
+    <visual name="empty_05_v0">
+      <material>
+        <ambient>0.06000000000000001 0.06000000000000001 0.06000000000000001 1.0</ambient>
+        <diffuse>0.042 0.042 0.042 1.0</diffuse>
+        <specular>0.015 0.015 0.015 1.0</specular>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="empty_06_link">
+    <visual name="empty_06_v0">
+      <material>
+        <ambient>0.06000000000000001 0.06000000000000001 0.06000000000000001 1.0</ambient>
+        <diffuse>0.042 0.042 0.042 1.0</diffuse>
+        <specular>0.015 0.015 0.015 1.0</specular>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="empty_07_link">
+    <visual name="empty_07_v0">
+      <material>
+        <ambient>0.06000000000000001 0.06000000000000001 0.06000000000000001 1.0</ambient>
+        <diffuse>0.042 0.042 0.042 1.0</diffuse>
+        <specular>0.015 0.015 0.015 1.0</specular>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="empty_08_link">
+    <visual name="empty_08_v0">
+      <material>
+        <ambient>0.06000000000000001 0.06000000000000001 0.06000000000000001 1.0</ambient>
+        <diffuse>0.042 0.042 0.042 1.0</diffuse>
+        <specular>0.015 0.015 0.015 1.0</specular>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="empty_09_link">
+    <visual name="empty_09_v0">
+      <material>
+        <ambient>0.06000000000000001 0.06000000000000001 0.06000000000000001 1.0</ambient>
+        <diffuse>0.042 0.042 0.042 1.0</diffuse>
+        <specular>0.015 0.015 0.015 1.0</specular>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="empty_10_link">
+    <visual name="empty_10_v0">
+      <material>
+        <ambient>0.06000000000000001 0.06000000000000001 0.06000000000000001 1.0</ambient>
+        <diffuse>0.042 0.042 0.042 1.0</diffuse>
+        <specular>0.015 0.015 0.015 1.0</specular>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="empty_11_link">
+    <visual name="empty_11_v0">
+      <material>
+        <ambient>0.06000000000000001 0.06000000000000001 0.06000000000000001 1.0</ambient>
+        <diffuse>0.042 0.042 0.042 1.0</diffuse>
+        <specular>0.015 0.015 0.015 1.0</specular>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="empty_12_link">
+    <visual name="empty_12_v0">
+      <material>
+        <ambient>0.06000000000000001 0.06000000000000001 0.06000000000000001 1.0</ambient>
+        <diffuse>0.042 0.042 0.042 1.0</diffuse>
+        <specular>0.015 0.015 0.015 1.0</specular>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="empty_13_link">
+    <visual name="empty_13_v0">
+      <material>
+        <ambient>0.06000000000000001 0.06000000000000001 0.06000000000000001 1.0</ambient>
+        <diffuse>0.042 0.042 0.042 1.0</diffuse>
+        <specular>0.015 0.015 0.015 1.0</specular>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="empty_14_link">
+    <visual name="empty_14_v0">
+      <material>
+        <ambient>0.06000000000000001 0.06000000000000001 0.06000000000000001 1.0</ambient>
+        <diffuse>0.042 0.042 0.042 1.0</diffuse>
+        <specular>0.015 0.015 0.015 1.0</specular>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="empty_15_link">
+    <visual name="empty_15_v0">
+      <material>
+        <ambient>0.06000000000000001 0.06000000000000001 0.06000000000000001 1.0</ambient>
+        <diffuse>0.042 0.042 0.042 1.0</diffuse>
+        <specular>0.015 0.015 0.015 1.0</specular>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="empty_16_link">
+    <visual name="empty_16_v0">
+      <material>
+        <ambient>0.06000000000000001 0.06000000000000001 0.06000000000000001 1.0</ambient>
+        <diffuse>0.042 0.042 0.042 1.0</diffuse>
+        <specular>0.015 0.015 0.015 1.0</specular>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="empty_17_link">
+    <visual name="empty_17_v0">
+      <material>
+        <ambient>0.06000000000000001 0.06000000000000001 0.06000000000000001 1.0</ambient>
+        <diffuse>0.042 0.042 0.042 1.0</diffuse>
+        <specular>0.015 0.015 0.015 1.0</specular>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="empty_18_link">
+    <visual name="empty_18_v0">
+      <material>
+        <ambient>0.06000000000000001 0.06000000000000001 0.06000000000000001 1.0</ambient>
+        <diffuse>0.042 0.042 0.042 1.0</diffuse>
+        <specular>0.015 0.015 0.015 1.0</specular>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="empty_19_link">
+    <visual name="empty_19_v0">
+      <material>
+        <ambient>0.06000000000000001 0.06000000000000001 0.06000000000000001 1.0</ambient>
+        <diffuse>0.042 0.042 0.042 1.0</diffuse>
+        <specular>0.015 0.015 0.015 1.0</specular>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="empty_20_link">
+    <visual name="empty_20_v0">
+      <material>
+        <ambient>0.06000000000000001 0.06000000000000001 0.06000000000000001 1.0</ambient>
+        <diffuse>0.042 0.042 0.042 1.0</diffuse>
+        <specular>0.015 0.015 0.015 1.0</specular>
+      </material>
+    </visual>
+  </gazebo>
+</robot>
