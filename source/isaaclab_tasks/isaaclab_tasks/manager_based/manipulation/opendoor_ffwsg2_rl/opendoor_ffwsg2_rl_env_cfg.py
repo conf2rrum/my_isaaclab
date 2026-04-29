@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -39,6 +40,36 @@ _ISAACLAB_ROOT = Path(__file__).resolve().parents[6]
 # Asset locations.
 SERVER_RACK_USD_PATH = str(_ISAACLAB_ROOT / "custom_assets/network_rack_v4.usd")
 FFW_SG2_USD_PATH = str(_ISAACLAB_ROOT / "custom_assets/robots/FFW_SG2/FFW_SG2.usd")
+WAREHOUSE_USD_PATH = str(_ISAACLAB_ROOT / "custom_assets/warehouse_h10m_corner_in.usd")
+FENCE_POST_USD_PATH = str(_ISAACLAB_ROOT / "custom_assets/MetalFencing_A1.usd")
+
+# Training layout.
+TRAIN_NUM_ENVS = 100
+TRAIN_ENV_SPACING = 2.5
+TRAIN_GRID_SIDE = math.ceil(math.sqrt(TRAIN_NUM_ENVS))
+TRAIN_GRID_SPAN = max(TRAIN_GRID_SIDE - 1, 0) * TRAIN_ENV_SPACING
+TRAIN_WORLD_OFFSET = (36.25, 0.0, 0.0)
+
+# Warehouse backdrop.
+# The USD is a corner set whose interior extends in the negative X/Y directions from the asset origin.
+# Shift the scaled corner forward so the 10x10 env grid sits inside it instead of outside it.
+WAREHOUSE_BASE_FOOTPRINT_M = 10.0
+WAREHOUSE_CLEARANCE_M = 5.0
+WAREHOUSE_TARGET_FOOTPRINT_M = TRAIN_GRID_SPAN + TRAIN_ENV_SPACING + 2.0 * WAREHOUSE_CLEARANCE_M
+WAREHOUSE_XY_SCALE = max(1.0, WAREHOUSE_TARGET_FOOTPRINT_M / WAREHOUSE_BASE_FOOTPRINT_M)
+WAREHOUSE_SCALE = (WAREHOUSE_XY_SCALE, WAREHOUSE_XY_SCALE, 1.0)
+WAREHOUSE_POS = (0.5 * WAREHOUSE_TARGET_FOOTPRINT_M, 0.5 * WAREHOUSE_TARGET_FOOTPRINT_M, 0.0)
+ENABLE_DEMO_BOUNDARIES = False
+
+# Visual fence posts that mark the per-robot training cells. Collisions are disabled so they do not affect RL.
+FENCE_POST_ROOT_PATH = "/World/FencePosts"
+FENCE_POST_SCALE = (0.01, 0.01, 0.01)
+FENCE_POST_ROT_WXYZ = (1.0, 0.0, 0.0, 0.0)
+FENCE_POST_Z = 0.0
+
+
+def _with_training_offset(pos: tuple[float, float, float]) -> tuple[float, float, float]:
+    return tuple(pos[i] + TRAIN_WORLD_OFFSET[i] for i in range(3))
 
 # Server rack articulation.
 RACK_DOOR_JOINT = "door_hinge"
@@ -48,7 +79,7 @@ RACK_CLOSED_JOINT_POS = 0.0
 RACK_MAX_OPEN_JOINT_POS = 2.61799
 RACK_TRAIN_OPEN_TARGET = 1.20
 RACK_SUCCESS_OPEN_THRESHOLD = RACK_TRAIN_OPEN_TARGET
-RACK_POS = (0.65, 0.0, 0.0)
+RACK_POS = _with_training_offset((0.65, 0.0, 0.0))
 # RACK_ROT_WXYZ = (1.0, 0.0, 0.0, 0.0)
 RACK_ROT_WXYZ = (0.70710678, 0.0, 0.0, -0.70710678)
 
@@ -73,7 +104,7 @@ DEMO_WALL_PRIM_NAMES = ("DemoWallNorth", "DemoWallSouth", "DemoWallEast", "DemoW
 
 # Robot defaults. Adjust these names once the FFW SG2 USD is in place.
 FIX_ROBOT_BASE = True
-ROBOT_POS = (0.3, -1.0, 0.0)
+ROBOT_POS = _with_training_offset((0.3, -1.0, 0.0))
 ROBOT_ROT_WXYZ = (0.70710678, 0.0, 0.0, 0.70710678)
 ROBOT_LIFT_LOWEST_JOINT_POS = -0.4
 ROBOT_ARM_JOINT_NAMES = ["arm_r_joint[1-7]"]
@@ -81,14 +112,25 @@ ROBOT_EE_BODY_NAME = "arm_r_link7"
 ROBOT_GRIPPER_JOINT_NAMES = ["gripper_r_joint[1-4]"]
 ROBOT_GRIPPER_OPEN_COMMAND = {"gripper_r_joint.*": 0.0}
 ROBOT_GRIPPER_CLOSE_COMMAND = {"gripper_r_joint.*": 1.0}
+ROBOT_MATCHED_ARM_HOME_JOINT_POS = {
+    "arm_l_joint1": 0.0,
+    "arm_l_joint2": 0.0,
+    "arm_l_joint3": 0.0,
+    "arm_l_joint4": 0.0,
+    "arm_l_joint5": 0.0,
+    "arm_l_joint6": 0.0,
+    "arm_l_joint7": 0.0,
+    "arm_r_joint1": 0.0,
+    "arm_r_joint2": 0.0,
+    "arm_r_joint3": 0.0,
+    "arm_r_joint4": 0.0,
+    "arm_r_joint5": 0.0,
+    "arm_r_joint6": 0.0,
+    "arm_r_joint7": 0.0,
+}
 ROBOT_DEFAULT_JOINT_POS = {
-    "arm_r_joint1": 0.638451,
-    "arm_r_joint2": -0.924706,
-    "arm_r_joint3": -0.737492,
-    "arm_r_joint4": -2.572742,
-    "arm_r_joint5": -1.302020,
-    "arm_r_joint6": 0.350000,
-    "arm_r_joint7": -0.527065,
+    **ROBOT_MATCHED_ARM_HOME_JOINT_POS,
+    "gripper_l_joint.*": 0.0,
     "gripper_r_joint.*": 0.0,
     "head_joint1": 0.694821,
     "head_joint2": -0.350000,
@@ -131,6 +173,10 @@ def _constant_vec(env: ManagerBasedRLEnv, values: tuple[float, ...]) -> torch.Te
     return torch.tensor(values, dtype=torch.float32, device=env.device).unsqueeze(0).expand(env.num_envs, -1)
 
 
+def _training_offset_vec(env: ManagerBasedRLEnv) -> torch.Tensor:
+    return _constant_vec(env, TRAIN_WORLD_OFFSET)
+
+
 def _body_id(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg, body_name: str) -> int:
     asset = env.scene[asset_cfg.name]
     body_ids, _ = asset.find_bodies(body_name)
@@ -142,7 +188,7 @@ def _body_id(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg, body_name: str) 
 def body_pos(env: ManagerBasedRLEnv, body_name: str, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")):
     asset = env.scene[asset_cfg.name]
     body_id = _body_id(env, asset_cfg, body_name)
-    return asset.data.body_pos_w[:, body_id] - env.scene.env_origins
+    return asset.data.body_pos_w[:, body_id] - env.scene.env_origins - _training_offset_vec(env)
 
 
 def body_quat(env: ManagerBasedRLEnv, body_name: str, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")):
@@ -163,7 +209,8 @@ def body_lin_vel(env: ManagerBasedRLEnv, body_name: str, asset_cfg: SceneEntityC
 
 def asset_root_pose(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg) -> torch.Tensor:
     asset = env.scene[asset_cfg.name]
-    return torch.cat((asset.data.root_pos_w - env.scene.env_origins, asset.data.root_quat_w), dim=-1)
+    root_pos = asset.data.root_pos_w - env.scene.env_origins - _training_offset_vec(env)
+    return torch.cat((root_pos, asset.data.root_quat_w), dim=-1)
 
 
 def door_hinge_pos(
@@ -410,6 +457,52 @@ def joint_opened(
     return opened
 
 
+def spawn_area_fence_posts(
+    env: ManagerBasedRLEnv,
+    env_ids,
+    root_path: str = FENCE_POST_ROOT_PATH,
+    asset_path: str = FENCE_POST_USD_PATH,
+    scale: tuple[float, float, float] = FENCE_POST_SCALE,
+    orientation: tuple[float, float, float, float] = FENCE_POST_ROT_WXYZ,
+    z: float = FENCE_POST_Z,
+) -> None:
+    """Spawn visual fence posts at shared corners of robot-rack task spaces."""
+
+    stage = sim_utils.get_current_stage()
+    if stage.GetPrimAtPath(root_path).IsValid():
+        return
+    stage.DefinePrim(root_path, "Xform")
+
+    origins = env.scene.env_origins.detach().cpu()
+    task_center_offset_x = 0.5 * (ROBOT_POS[0] + RACK_POS[0]) - TRAIN_WORLD_OFFSET[0]
+    task_center_offset_y = 0.5 * (ROBOT_POS[1] + RACK_POS[1]) - TRAIN_WORLD_OFFSET[1]
+    x_centers = sorted({round(float(value) + task_center_offset_x, 5) for value in origins[:, 0]})
+    y_centers = sorted({round(float(value) + task_center_offset_y, 5) for value in origins[:, 1]})
+
+    def boundary_coords(centers: list[float]) -> list[float]:
+        if len(centers) == 1:
+            half_spacing = 0.5 * TRAIN_ENV_SPACING
+            return [centers[0] - half_spacing, centers[0] + half_spacing]
+        bounds = [centers[0] - 0.5 * (centers[1] - centers[0])]
+        bounds.extend(0.5 * (centers[i] + centers[i + 1]) for i in range(len(centers) - 1))
+        bounds.append(centers[-1] + 0.5 * (centers[-1] - centers[-2]))
+        return bounds
+
+    x_bounds = boundary_coords(x_centers)
+    y_bounds = boundary_coords(y_centers)
+    fence_cfg = sim_utils.UsdFileCfg(
+        usd_path=asset_path,
+        scale=scale,
+        collision_props=sim_utils.CollisionPropertiesCfg(collision_enabled=False),
+    )
+
+    for x_id, x in enumerate(x_bounds):
+        for y_id, y in enumerate(y_bounds):
+            prim_path = f"{root_path}/Post_{x_id:02d}_{y_id:02d}"
+            translation = (x + TRAIN_WORLD_OFFSET[0], y + TRAIN_WORLD_OFFSET[1], z + TRAIN_WORLD_OFFSET[2])
+            fence_cfg.func(prim_path, fence_cfg, translation=translation, orientation=orientation)
+
+
 def apply_grasp_friction_materials(
     env: ManagerBasedRLEnv,
     env_ids,
@@ -596,6 +689,16 @@ class CalibratedWristPoseDeltaRetargeterCfg(RetargeterCfg):
 @configclass
 class OpenDoorFFWSG2SceneCfg(InteractiveSceneCfg):
     """Scene for opening the server rack door with an FFW SG2 robot."""
+
+    warehouse = AssetBaseCfg(
+        prim_path="/World/Warehouse",
+        spawn=sim_utils.UsdFileCfg(
+            usd_path=WAREHOUSE_USD_PATH,
+            scale=WAREHOUSE_SCALE,
+        ),
+        init_state=AssetBaseCfg.InitialStateCfg(pos=WAREHOUSE_POS),
+        collision_group=-1,
+    )
 
     robot = ArticulationCfg(
         prim_path="{ENV_REGEX_NS}/Robot",
@@ -818,6 +921,14 @@ class OpenDoorFFWSG2SceneCfg(InteractiveSceneCfg):
         init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, -0.5 * DEMO_GROUND_THICKNESS)),
     )
 
+    if not ENABLE_DEMO_BOUNDARIES:
+        demo_floor = None
+        demo_wall_north = None
+        demo_wall_south = None
+        demo_wall_east = None
+        demo_wall_west = None
+        demo_ground = None
+
     light = AssetBaseCfg(
         prim_path="/World/light",
         spawn=sim_utils.DomeLightCfg(color=(0.75, 0.75, 0.75), intensity=3000.0),
@@ -938,20 +1049,29 @@ class TerminationsCfg:
     )
     abandoned = DoneTerm(
         func=eef_too_far_from_handle,
-        params={"threshold": 1.2},
+        params={"threshold": 2.0},
     )
 
 
 @configclass
 class EventCfg:
+    spawn_area_fences = EventTerm(
+        func=spawn_area_fence_posts,
+        mode="startup",
+    )
+
     apply_grasp_friction = EventTerm(
         func=apply_grasp_friction_materials,
         mode="startup",
     )
 
-    apply_demo_wall_materials = EventTerm(
-        func=apply_demo_wall_materials,
-        mode="startup",
+    apply_demo_wall_materials = (
+        EventTerm(
+            func=apply_demo_wall_materials,
+            mode="startup",
+        )
+        if ENABLE_DEMO_BOUNDARIES
+        else None
     )
 
     set_door_mass = EventTerm(
@@ -971,7 +1091,7 @@ class EventCfg:
         mode="reset",
         params={
             "asset_cfg": SceneEntityCfg("robot", joint_names=ROBOT_ARM_JOINT_NAMES),
-            "position_range": (-0.03, 0.03),
+            "position_range": (0.0, 0.0),
             "velocity_range": (0.0, 0.0),
         },
     )
@@ -979,7 +1099,11 @@ class EventCfg:
 
 @configclass
 class OpenDoorFFWSG2EnvCfg(ManagerBasedRLEnvCfg):
-    scene: OpenDoorFFWSG2SceneCfg = OpenDoorFFWSG2SceneCfg(num_envs=100, env_spacing=2.5, replicate_physics=True)
+    scene: OpenDoorFFWSG2SceneCfg = OpenDoorFFWSG2SceneCfg(
+        num_envs=TRAIN_NUM_ENVS,
+        env_spacing=TRAIN_ENV_SPACING,
+        replicate_physics=True,
+    )
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()
     rewards: RewardsCfg = RewardsCfg()
@@ -994,8 +1118,8 @@ class OpenDoorFFWSG2EnvCfg(ManagerBasedRLEnvCfg):
     def __post_init__(self):
         self.decimation = 4
         self.episode_length_s = 12.0
-        self.viewer.eye = (1.8, -1.8, 1.4)
-        self.viewer.lookat = (0.65, 0.0, 0.9)
+        self.viewer.eye = _with_training_offset((1.8, -1.8, 1.4))
+        self.viewer.lookat = _with_training_offset((0.65, 0.0, 0.9))
 
         self.sim.dt = 1 / 200
         self.sim.render_interval = 2
@@ -1048,7 +1172,7 @@ class OpenDoorFFWSG2EnvCfg_PLAY(OpenDoorFFWSG2EnvCfg):
     def __post_init__(self):
         super().__post_init__()
         self.scene.num_envs = 1
-        self.scene.env_spacing = 2.5
+        self.scene.env_spacing = TRAIN_ENV_SPACING
         self.observations.policy.enable_corruption = False
         self.observations.datagen_info = ObservationsCfg.DatagenInfoCfg()
         self._configure_xr_teleop()
